@@ -1,4 +1,4 @@
-# Investment Banking Deal Tracker + Analyzer
+# Investment Banking Deal Tracker & Analyzer
 
 A full-stack tool that aggregates and analyzes M&A, IPO, and LBO activity across industries and geographies.
 
