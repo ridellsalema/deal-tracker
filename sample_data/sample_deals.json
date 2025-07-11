@@ -1,0 +1,19 @@
+[
+    {
+      "id": 1,
+      "target": "Twitter",
+      "buyer": "Elon Musk",
+      "value": 44000000000,
+      "sector": "Technology",
+      "date": "2022-04-25"
+    },
+    {
+      "id": 2,
+      "target": "Activision Blizzard",
+      "buyer": "Microsoft",
+      "value": 68700000000,
+      "sector": "Gaming",
+      "date": "2022-01-18"
+    }
+  ]
+  
