@@ -22,3 +22,10 @@ A full-stack tool that aggregates and analyzes M&A, IPO, and LBO activity across
 cd backend
 pip install -r requirements.txt
 uvicorn app.main:app --reload
+
+###Update Day 2
+- ✅ Created PostgreSQL dealtracker database
+- ✅ Defined `Deal` SQLAlchemy model
+- ✅ Built full CRUD API with FastAPI
+- ✅ Tested endpoints at `/api/deals`
+- ✅ Set up .env and PostgreSQL connection
