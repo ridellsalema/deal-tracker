@@ -1,61 +1,87 @@
-
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
 
 const DealDetail = () => {
   const { id } = useParams();
   const [deal, setDeal] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState("");
+  const [error, setError] = useState("");
+  const [buttonState, setButtonState] = useState("idle"); // idle | loading | error | done
 
+  // Fetch deal
   useEffect(() => {
-    fetch(`http://127.0.0.1:8000/api/deals/${id}`)
-      .then((res) => res.json())
-      .then((data) => setDeal(data))
-      .catch((err) => console.error('Failed to fetch deal:', err));
+    const fetchDeal = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/deals/${id}`);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        const data = await res.json();
+        setDeal(data);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to fetch deal");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDeal();
   }, [id]);
 
-  if (!deal) return <div className="p-8 text-[#565656]">Loading deal...</div>;
+  // Generating summary with ollama
+  const handleGenerateSummary = async () => {
+    if (buttonState === "loading" || buttonState === "done") return;
+    
+    setButtonState("loading");
+    setSummary("");
+    setError("");
+    
+    // Create a description from deal data if none exists
+    const description = deal.description || `${deal.buyer} acquired ${deal.target} for $${deal.value} in the ${deal.sector} sector.`;
+    
+    try {
+      const res = await axios.post("http://localhost:8000/api/ai/summarize", {
+        buyer: deal.buyer,
+        target: deal.target,
+        description: description,
+      });
+      setSummary(res.data.summary);
+      setButtonState("done");
+    } catch (err) {
+      setSummary("");
+      setButtonState("error");
+      setError("Error generating summary: " + (err?.message || err));
+    }
+  };
+
+
+  if (loading) return <p>Loading deal...</p>;
+  if (error) return <p>{error}</p>;
+  if (!deal) return <p>No deal found.</p>;
+
+  console.log("Deal object:", deal); // Debug log
 
   return (
-    <div className="min-h-screen bg-[#f0f0f0] p-8">
-      <Link to="/deals" className="text-[#5192a5] underline mb-4 inline-block">← Back to deals</Link>
+    <div style={{ padding: "20px", backgroundColor: "#f0f0f0" }}>
+      <h2>{deal.title || `${deal.buyer} Acquires ${deal.target}`}</h2>
+      <p><strong>Buyer:</strong> {deal.buyer}</p>
+      <p><strong>Target:</strong> {deal.target}</p>
+      <p><strong>Value:</strong> ${deal.value}</p>
+      <p><strong>Sector:</strong> {deal.sector}</p>
+      <p><strong>{summary ? "Summary" : "Description"}:</strong> {summary || deal.description || "No description yet."}</p>
 
-      <div className="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-lg">
-        {/* Info section */}
-
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-[#5192a5] mb-2">
-            {deal.buyer} → {deal.target}
-          </h1>
-
-          <p className="text-[#565656] mb-1">Sector: <strong>{deal.sector}</strong></p>
-
-          <p className="text-[#565656] mb-1">Deal Value: <span className="text-[#ff791f] font-semibold">${deal.value.toLocaleString()}</span></p>
-
-          <p className="text-[#565656] mb-4">Date: {deal.date}</p>
-
-
-          <div className="mt-4">
-            <h2 className="text-xl font-semibold text-[#565656] mb-2">📄 Deal Summary</h2>
-
-            <p className="text-sm text-[#565656] leading-relaxed">
-              {/* Placeholder ** will come from OpenAI summary */}
-              This deal marked a major consolidation in the {deal.sector} industry. Vodafone's acquisition of {deal.target} allowed it to expand its global footprint and restructure competitive dynamics in the market.
-            </p>
-
-            <h2 className="text-xl font-semibold text-[#565656] mt-6 mb-2">🔥 Pain Points</h2>
-
-            <ul className="list-disc pl-6 text-sm text-[#565656]">
-              <li>Regulatory hurdles across European jurisdictions</li>
-              <li>Integration challenges with telecom infrastructure</li>
-              <li>Shareholder concerns over deal size and debt impact</li>
-            </ul>
-          </div>
-
-
-        </div>
-
-      </div>
+      <button
+        onClick={handleGenerateSummary}
+        className={`bg-[#ff791f] text-white px-4 py-2 mt-3 rounded hover:bg-[#d6681b] transition-colors duration-200 ${buttonState === "error" ? "bg-red-600 hover:bg-red-700" : ""} ${buttonState === "loading" ? "opacity-50 cursor-not-allowed" : ""}`}
+        disabled={buttonState === "loading" || buttonState === "done"}
+      >
+        {buttonState === "loading"
+          ? "Generating summary..."
+          : buttonState === "error"
+          ? "Error"
+          : "Generate Summary"}
+      </button>
     </div>
   );
 };

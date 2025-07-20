@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.api import deals
+from app.api import ai
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Investment Banking Deal Tracker")
@@ -11,6 +12,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(ai.router)
 
 app.include_router(deals.router, prefix="/api/deals", tags=["Deals"])
 
